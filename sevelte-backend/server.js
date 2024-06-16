@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const cors = require('cors');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const SECRET_KEY = 'your_secret_key';
 
 // In-memory user data
@@ -13,7 +13,13 @@ const users = [];
 
 // Middleware
 app.use(bodyParser.json());
-app.use(cors()); // Enable CORS
+
+const corsOptions = {
+    origin: true, 
+    optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions)); // Enable CORS with options
 
 // Utility functions
 const hashPassword = async (password) => {

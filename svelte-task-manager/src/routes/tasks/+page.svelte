@@ -7,6 +7,7 @@
   let tasks = [];
 
   onMount(() => {
+    console.log("onMount");
     taskStore.subscribe((value) => {
       tasks = value;
     });
