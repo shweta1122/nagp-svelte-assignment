@@ -11,6 +11,7 @@
   onMount(() => {
     category = get(page).params.category;
     const storedTasks = localStorage.getItem("tasks.detail");
+    console.log(storedTasks,'storedTasks');
 
     if (storedTasks) {
       const allTasks = JSON.parse(storedTasks);
