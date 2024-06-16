@@ -1,79 +1,85 @@
 <script>
-  import { taskStore } from "$lib/stores/taskStore";
   import TaskCard from "$lib/TaskCard.svelte";
-  import { onDestroy } from "svelte";
+  import { onMount } from "svelte";
+  import { writable } from "svelte/store";
 
-  let tasks = [
-    {
-      id: 1,
-      title: "Task 1",
-      category: "Work",
-      dueDate: "2022-12-12",
-      status: "Pending",
-    },
-    {
-      id: 2,
-      title: "Task 2",
-      category: "Personal",
-      dueDate: "2022-12-10",
-      status: "Completed",
-    },
-    {
-      id: 3,
-      title: "Task 3",
-      category: "Work",
-      dueDate: "2022-12-14",
-      status: "Pending",
+  let tasks = writable([]);
+  let sortedTasks = writable([]);
+  const loading = writable(true);
+
+  const fetchAndSetTasks = async () => {
+    const storedTasks = localStorage.getItem("tasks.detail");
+    console.log("storedTasks", storedTasks);
+    if (storedTasks) {
+      tasks.set(JSON.parse(storedTasks).map((task, index) => ({
+        ...task,
+        id: task.id || index // Ensure each task has a unique id
+      })));
+      console.log("tasks", $tasks);
     }
-  ];
+    loading.set(false);
+  };
 
-  let sortedTasks = [...tasks];
+  onMount(fetchAndSetTasks);
+
+  $: sortedTasks.set([...$tasks]);
 
   // Function to sort tasks by status
   const sortTasksByStatus = () => {
-    sortedTasks = [...tasks].sort((a, b) => a.status === 'Pending' ? -1 : 1);
+    sortedTasks.set([...$tasks].sort((a, b) => (a.status === "Pending" ? -1 : 1)));
   };
 
   // Function to sort tasks by due date
   const sortTasksByDate = () => {
-    sortedTasks = [...tasks].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    sortedTasks.set([...$tasks].sort(
+      (a, b) => new Date(a.dueDate) - new Date(b.dueDate)
+    ));
   };
 
-  // Subscribe to the task store reactively
-  // const unsubscribe = taskStore.subscribe((value) => {
-  //   tasks = value;
-  //   sortedTasks = [...tasks]; // Reset sortedTasks to match the latest tasks
-  // });
-
-  // Cleanup subscription on component destruction
-  // onDestroy(() => {
-  //   unsubscribe();
-  // });
-
   const deleteTask = (id) => {
-    taskStore.deleteTask(id);
-    tasks = tasks.filter(task => task.id !== id);
-    sortedTasks = [...tasks]; // Update sortedTasks to reflect the deletion
+    console.log("Task deleted:", id);
+
+    // Update the local tasks array and local storage
+    tasks.update(t => {
+      const updatedTasks = t.filter((task) => task.id !== id);
+      localStorage.setItem("tasks.detail", JSON.stringify(updatedTasks));
+      return updatedTasks;
+    });
+
+    // Update the sortedTasks array
+    sortedTasks.update(t => t.filter((task) => task.id !== id));
+
+    // Re-fetch and set tasks to ensure everything is updated correctly
+    fetchAndSetTasks();
   };
 </script>
 
 <div>
-  <div class="sort-buttons">
-    <button on:click={sortTasksByStatus}>Sort by Status</button>
-    <button on:click={sortTasksByDate}>Sort by Due Date</button>
-  </div>
-  <div class="task-list">
-    {#if sortedTasks.length > 0}
-      {#each sortedTasks as task (task.id)}
-        <TaskCard {task} on:delete={() => deleteTask(task.id)} />
-      {/each}
-    {:else}
-      <p>No tasks available.</p>
-    {/if}
-  </div>
+  {#if $loading}
+    <div class="loading">Loading...</div>
+  {:else}
+    <div class="sort-buttons">
+      <button on:click={sortTasksByStatus}>Sort by Status</button>
+      <button on:click={sortTasksByDate}>Sort by Due Date</button>
+    </div>
+    <div class="task-list">
+      {#if $sortedTasks.length > 0}
+        {#each $sortedTasks as task (task.id)}
+          <TaskCard {task} on:delete={() => deleteTask(task.id)} />
+        {/each}
+      {:else}
+        <p>No tasks available.</p>
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <style>
+  .loading {
+    font-size: 1.5rem;
+    text-align: center;
+    padding: 2rem;
+  }
   .sort-buttons {
     display: flex;
     gap: 1rem;

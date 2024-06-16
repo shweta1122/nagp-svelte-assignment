@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   export let categories = [];
   const dispatch = createEventDispatcher();
   
@@ -7,6 +7,13 @@
   let category = categories[0] || '';
   let dueDate = '';
   let status = 'pending';
+
+  onMount(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+    }
+  });
 
   const submitTask = () => {
     dispatch('submit', { title, category, dueDate, status });
