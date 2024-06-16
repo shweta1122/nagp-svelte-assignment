@@ -3,7 +3,7 @@ import { writable } from "svelte/store";
 const user = writable(null);
 
 async function register(username, password) {
-  const response = await fetch("http://localhost:3000/register", {
+  const response = await fetch("https://nagp-svelte-assignment-sigma.vercel.app/register", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
